@@ -332,7 +332,27 @@ function apiError(status,m){
   if(status===401||status===403) return "คีย์นี้ไม่มีสิทธิ์ใช้งาน ลองสร้างคีย์ใหม่ใน AI Studio";
   if(status===404) return "ไม่พบโมเดลนี้ ลองเปลี่ยนชื่อโมเดลในตั้งค่าขั้นสูง";
   if(status===429) return "ใช้เกินโควตาแล้ว รอสักพักหรือเช็กโควตาใน AI Studio";
+  if(status===503||status===500) return "เซิร์ฟเวอร์ Google มีคนใช้เยอะมากตอนนี้ (ลองโมเดลสำรองแล้วก็ยังเต็ม) รอ 1–2 นาทีแล้วกดใหม่";
   return m||"ลองใหม่อีกครั้ง";
+}
+
+// call Gemini, falling back to backup models when one is overloaded or missing
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function callGemini(models,key,body,onTry){
+  const list=[...new Set(models.filter(Boolean))];
+  let last={status:0,msg:""};
+  for(let i=0;i<list.length;i++){
+    const model=list[i];
+    if(onTry) onTry(model,i);
+    if(i>0) await sleep(800);
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
+      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)});
+    const data=await res.json().catch(()=>({}));
+    if(res.ok) return data;
+    last={status:res.status,msg:(data.error&&data.error.message)||""};
+    if(![500,503,404,429].includes(res.status)) break;
+  }
+  const e=new Error(`(${last.status}) `+apiError(last.status,last.msg)); e.status=last.status; throw e;
 }
 
 // ---------- script generation ----------
@@ -359,18 +379,16 @@ $("think").onclick=async ()=>{
   $("think").disabled=true;$("think").textContent="กำลังคิดสคริปต์...";
   setStatus2("AI กำลังดูรูปและเขียนสคริปต์");
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
-      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
-      body:JSON.stringify({contents:[{parts}],generationConfig:{
+    let data;
+    try{
+      data=await callGemini([model,"gemini-flash-lite-latest","gemini-2.5-flash"],key,{contents:[{parts}],generationConfig:{
         responseMimeType:"application/json",
         responseSchema:{type:"OBJECT",properties:{
           script:{type:"STRING"},caption:{type:"STRING"},
           hashtags:{type:"ARRAY",items:{type:"STRING"}}
         },required:["script","caption","hashtags"]}
-      }})
-    });
-    const data=await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(`คิดสคริปต์ไม่สำเร็จ (${res.status}) `+apiError(res.status,data.error&&data.error.message));
+      }},(m,i)=>{if(i>0)setStatus2("โมเดลหลักคนใช้เยอะ กำลังลองโมเดลสำรอง ("+m+")");});
+    }catch(err){ if(err.status) err.message="คิดสคริปต์ไม่สำเร็จ "+err.message; throw err; }
     const raw=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("").replace(/```json|```/g,"").trim();
     let out; try{out=JSON.parse(raw);}catch(e){throw new Error("AI ตอบกลับมาในรูปแบบที่อ่านไม่ได้ ลองกดอีกครั้ง");}
     const tags=(out.hashtags||[]).slice(0,5).map(t=>t.trim().startsWith("#")?t.trim():"#"+t.trim().replace(/\s+/g,""));
@@ -420,20 +438,13 @@ $("go").onclick = async ()=>{
   $("go").disabled=true;$("go").classList.add("busy");$("goText").textContent="กำลังพากย์...";
   setStatus("กำลังส่งสคริปต์ไปที่ Gemini อาจใช้เวลา 10–40 วินาที");
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-goog-api-key":key},
-      body:JSON.stringify({
+    let data;
+    try{
+      data=await callGemini([model,"gemini-2.5-flash-preview-tts"],key,{
         contents:[{parts:[{text:prompt}]}],
         generationConfig:{responseModalities:["AUDIO"],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}
-      })
-    });
-    const data=await res.json().catch(()=>({}));
-    if(!res.ok){
-      const m=(data.error&&data.error.message)||"";
-      const msg=`พากย์ไม่สำเร็จ (${res.status}) `+apiError(res.status,m);
-      throw new Error(msg);
-    }
+      },(m,i)=>{if(i>0)setStatus("โมเดลหลักคนใช้เยอะ กำลังลองโมเดลสำรอง ("+m+")");});
+    }catch(err){ if(err.status) err.message="พากย์ไม่สำเร็จ "+err.message; throw err; }
     const part=data?.candidates?.[0]?.content?.parts?.find(p=>p.inlineData);
     if(!part) throw new Error("Gemini ไม่ได้ส่งเสียงกลับมา ลองย่อสคริปต์ให้สั้นลงหรือลองใหม่");
     const mime=part.inlineData.mimeType||"";
