@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ห้องพากย์รีวิว</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ห้องพากย์">
+<meta name="theme-color" content="#FFC629">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23FFC629%22/%3E%3Ctext x=%2250%22 y=%2268%22 font-size=%2256%22 text-anchor=%22middle%22%3E🎙%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F8; --panel:#FFFFFF; --ink:#1B1F3B; --muted:#5B6180; --line:#D5DAEA;
+  --sun:#FFC629; --sun-ink:#3A2A00; --hot:#E0337A; --ok:#1E8E5A; --err:#C62D3A;
+  --field:#F6F7FC;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12142A; --panel:#1C1F3D; --ink:#EEF0FA; --muted:#A3A8C8; --line:#2F3460;
+    --field:#161935; --sun:#FFC629; --hot:#FF4F93;
+  }
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Leelawadee UI","Thonburi",Tahoma,sans-serif;font-size:16px;line-height:1.65}
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.basket{width:56px;height:56px;border-radius:16px;background:var(--sun);display:grid;place-items:center;flex:none;
+  box-shadow:4px 4px 0 var(--ink)}
+.basket svg{width:30px;height:30px}
+h1{font-family:Prompt,"Leelawadee UI",sans-serif;font-weight:800;font-size:clamp(1.6rem,4.5vw,2.2rem);line-height:1.15;margin:0}
+header p{margin:2px 0 0;color:var(--muted);font-size:.95rem}
+section{background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:20px;margin-bottom:16px}
+h2{font-family:Prompt,sans-serif;font-weight:700;font-size:1.15rem;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+h2 .n{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-size:.9rem;flex:none}
+label{display:block;font-weight:600;margin:12px 0 6px;font-size:.95rem}
+.hint{color:var(--muted);font-size:.87rem;margin:4px 0 0}
+input[type=text],input[type=password],textarea,select{
+  width:100%;font:inherit;color:var(--ink);background:var(--field);border:2px solid var(--line);border-radius:12px;padding:11px 13px}
+textarea{resize:vertical;min-height:150px}
+#style{min-height:70px}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1}
+.check{display:flex;align-items:center;gap:8px;font-weight:500;margin-top:10px;font-size:.93rem}
+.check input{width:18px;height:18px;accent-color:var(--hot)}
+button{font:inherit;cursor:pointer;border-radius:12px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:9px 14px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{border-radius:999px;padding:6px 14px;font-size:.9rem;border-color:var(--line)}
+.chip[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink);border-color:var(--sun)}
+.preview{background:var(--field);border:2px dashed var(--line);border-radius:12px;padding:12px 14px;white-space:pre-wrap;max-height:220px;overflow:auto;font-size:.95rem}
+.preview.empty{color:var(--muted)}
+.meta{color:var(--muted);font-size:.87rem;margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+details summary{cursor:pointer;color:var(--muted);font-size:.92rem;margin-top:12px}
+#go{width:100%;margin-top:6px;padding:18px;font-family:Prompt,sans-serif;font-size:1.25rem;font-weight:700;
+  background:var(--hot);color:#fff;border:none;border-radius:18px;box-shadow:5px 5px 0 var(--ink);display:flex;justify-content:center;align-items:center;gap:12px}
+#go:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+#go:disabled{opacity:.7;cursor:progress}
+.bars{display:inline-flex;gap:3px;align-items:center;height:22px}
+.bars i{width:4px;background:#fff;border-radius:2px;height:8px}
+#go.busy .bars i{animation:b .9s ease-in-out infinite}
+.bars i:nth-child(2){animation-delay:.15s!important;height:16px}.bars i:nth-child(3){animation-delay:.3s!important;height:22px}
+.bars i:nth-child(4){animation-delay:.45s!important;height:14px}.bars i:nth-child(5){animation-delay:.6s!important}
+@keyframes b{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.3)}}
+@media (prefers-reduced-motion:reduce){#go.busy .bars i{animation:none}}
+#status{margin:12px 2px 0;font-size:.95rem;min-height:1.4em}
+#status.err{color:var(--err);font-weight:600}
+#status.ok{color:var(--ok);font-weight:600}
+.clip{border:2px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
+.clip .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.clip b{font-family:Prompt,sans-serif}
+.clip small{color:var(--muted)}
+.clip audio{width:100%;margin:8px 0}
+.clip a{display:inline-block;font-weight:600;color:var(--ink);background:var(--sun);color:var(--sun-ink);padding:7px 14px;border-radius:10px;text-decoration:none}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;cursor:pointer;background:var(--field)}
+.drop:hover,.drop:focus-within{border-color:var(--sun)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop b{font-family:Prompt,sans-serif}
+.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.thumb{position:relative;width:88px;height:88px;border-radius:12px;overflow:hidden;border:2px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:4px;right:4px;padding:0 7px;border-radius:8px;font-size:.8rem;background:var(--panel)}
+#think{width:100%;margin-top:14px;padding:14px;font-family:Prompt,sans-serif;font-size:1.1rem;font-weight:700;background:var(--sun);color:var(--sun-ink);border-color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+#think:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+#think:disabled{opacity:.7;cursor:progress}
+.out{margin-top:14px;display:none}
+.out.show{display:block}
+.outbox{background:var(--field);border:2px solid var(--line);border-radius:12px;padding:12px 14px;white-space:pre-wrap}
+.tags{color:var(--hot);font-weight:600;margin-top:8px}
+.copyrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#status2{margin-top:10px;min-height:1.2em;font-size:.95rem}
+#status2.err{color:var(--err);font-weight:600}
+.empty-list{color:var(--muted);font-size:.93rem;margin:0}
+footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="basket" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1B1F3B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8 21h8"/></svg>
+    </div>
+    <div>
+      <h1>ห้องพากย์รีวิวสินค้า</h1>
+      <p>ใส่รูปสินค้า ได้สคริปต์ แคปชัน และไฟล์เสียงพากย์ในที่เดียว</p>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">1</span>API Key ของคุณ</h2>
+    <div class="keyrow">
+      <input type="password" id="key" placeholder="วางคีย์จาก aistudio.google.com" autocomplete="off" spellcheck="false">
+      <button type="button" id="showKey">ดู</button>
+    </div>
+    <label class="check"><input type="checkbox" id="remember"> จำคีย์ไว้ในเครื่องนี้</label>
+    <p class="hint">คีย์ถูกส่งตรงไปที่ Google เท่านั้น ไม่ผ่านที่อื่น อย่าติ๊ก “จำคีย์” ถ้าใช้เครื่องร่วมกับคนอื่น</p>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>ให้ AI คิดสคริปต์จากรูป</h2>
+    <label class="drop" id="drop">
+      <input type="file" id="imgs" accept="image/*" multiple>
+      <b>แตะเพื่อเลือกรูป</b>
+      <span class="hint">รูปสินค้า หรือหน้าปกวิดีโอ ได้สูงสุด 4 รูป</span>
+    </label>
+    <div class="thumbs" id="thumbs"></div>
+    <label for="info">ข้อมูลสินค้าเพิ่มเติม (ไม่ใส่ก็ได้)</label>
+    <textarea id="info" style="min-height:80px" placeholder="เช่น ชื่อสินค้า ราคา 199 บาท ลดเหลือ 99 ส่งฟรี จุดเด่นที่อยากเน้น"></textarea>
+    <div class="grid2">
+      <div>
+        <label for="len">ความยาวคลิป</label>
+        <select id="len">
+          <option value="15">15 วินาที</option>
+          <option value="20">20 วินาที</option>
+          <option value="25">25 วินาที</option>
+          <option value="30" selected>30 วินาที</option>
+          <option value="35">35 วินาที</option>
+          <option value="40">40 วินาที</option>
+        </select>
+      </div>
+      <div>
+        <label for="platform">แพลตฟอร์ม</label>
+        <select id="platform">
+          <option>TikTok</option><option>Shopee Video</option><option>Facebook Reels</option><option>Instagram Reels</option><option>YouTube Shorts</option><option>Lazada</option>
+        </select>
+      </div>
+    </div>
+    <label>โทนคลิป</label>
+    <div class="chips" id="chips"></div>
+    <p class="hint">โทนที่เลือกจะใช้ทั้งตอนคิดสคริปต์และตอนพากย์เสียง</p>
+    <button type="button" id="think">คิดสคริปต์ + แคปชัน</button>
+    <div id="status2" role="status" aria-live="polite"></div>
+    <div class="out" id="out">
+      <label>แคปชันสำหรับโพสต์</label>
+      <div class="outbox" id="capOut"></div>
+      <div class="tags" id="tagOut"></div>
+      <div class="copyrow">
+        <button type="button" id="copyCap">ก๊อปแคปชัน + แฮชแท็ก</button>
+      </div>
+      <p class="hint">สคริปต์ถูกใส่ลงในขั้นที่ 3 แล้ว แก้ได้ก่อนพากย์</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>สคริปต์</h2>
+    <textarea id="script" placeholder="สคริปต์จากขั้นที่ 2 จะมาอยู่ตรงนี้ หรือวางสคริปต์เองก็ได้ ใส่ [0:00–0:03] หรือ (เสียงตื่นเต้น) มาด้วยก็ได้ ระบบจะตัดออกให้ก่อนพากย์"></textarea>
+    <label class="check"><input type="checkbox" id="clean" checked> ตัดเวลา หัวข้อ และคำกำกับในวงเล็บออก</label>
+    <label for="preview-box" style="margin-top:14px">ข้อความที่จะถูกพากย์</label>
+    <div class="preview empty" id="preview-box">ยังไม่มีสคริปต์</div>
+    <div class="meta" id="count"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>เสียงและอารมณ์</h2>
+    <div class="grid2">
+      <div>
+        <label for="voice">เสียงพากย์</label>
+        <select id="voice"></select>
+      </div>
+      <div>
+        <label for="speed">ความเร็ว</label>
+        <select id="speed">
+          <option value="">ปกติ</option>
+          <option value="พูดเร็วขึ้นเล็กน้อย กระชับ">เร็วขึ้นนิด</option>
+          <option value="พูดเร็ว กระฉับกระเฉง เหมาะกับคลิปสั้น">เร็ว</option>
+          <option value="พูดช้า ชัดถ้อยชัดคำ">ช้า</option>
+        </select>
+      </div>
+    </div>
+    <label for="style">คำกำกับเสียง (แก้เองได้)</label>
+    <textarea id="style"></textarea>
+    <details>
+      <summary>ตั้งค่าขั้นสูง</summary>
+      <label for="model">โมเดลพากย์เสียง</label>
+      <input type="text" id="model" value="gemini-3.1-flash-tts-preview" spellcheck="false">
+      <label for="textModel">โมเดลคิดสคริปต์</label>
+      <input type="text" id="textModel" value="gemini-flash-latest" spellcheck="false">
+      <p class="hint">ถ้าขึ้นว่าไม่พบโมเดล ลองเปลี่ยนโมเดลคิดสคริปต์เป็น gemini-3.6-flash หรือโมเดลพากย์เป็น gemini-2.5-flash-preview-tts</p>
+    </details>
+  </section>
+
+  <button id="go" type="button"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span id="goText">พากย์เสียง</span></button>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <section style="margin-top:18px">
+    <h2>ไฟล์เสียงที่สร้างแล้ว</h2>
+    <div id="clips"><p class="empty-list">ยังไม่มีไฟล์ กดพากย์เสียงเพื่อสร้างไฟล์แรก</p></div>
+  </section>
+
+  <footer>ใช้ Gemini TTS ผ่านคีย์ของคุณเอง ค่าใช้จ่ายและโควตาเป็นไปตามบัญชี Google AI Studio</footer>
+</div>
+
+<script>
+const VOICES = [
+  ["Kore","ญ","หนักแน่น มั่นใจ"],["Aoede","ญ","สดใส ลื่นไหล"],["Leda","ญ","วัยรุ่น สดใส"],["Zephyr","ญ","สว่าง ร่าเริง"],
+  ["Autonoe","ญ","สว่าง"],["Callirrhoe","ญ","สบาย ๆ"],["Despina","ญ","นุ่มลื่น"],["Erinome","ญ","ชัดเจน"],
+  ["Laomedeia","ญ","ร่าเริง"],["Achernar","ญ","นุ่มนวล"],["Gacrux","ญ","ผู้ใหญ่"],["Pulcherrima","ญ","ตรงไปตรงมา"],
+  ["Sulafat","ญ","อบอุ่น"],["Vindemiatrix","ญ","อ่อนโยน"],
+  ["Puck","ช","ร่าเริง มีพลัง"],["Fenrir","ช","ตื่นเต้น"],["Charon","ช","ให้ข้อมูล"],["Orus","ช","หนักแน่น"],
+  ["Achird","ช","เป็นมิตร"],["Algenib","ช","เสียงแหบ"],["Algieba","ช","นุ่มลื่น"],["Alnilam","ช","มั่นคง"],
+  ["Enceladus","ช","เสียงลมหายใจ"],["Iapetus","ช","ชัดเจน"],["Rasalgethi","ช","ให้ข้อมูล"],["Sadachbia","ช","มีชีวิตชีวา"],
+  ["Sadaltager","ช","รอบรู้"],["Schedar","ช","สม่ำเสมอ"],["Umbriel","ช","สบาย ๆ"],["Zubenelgenubi","ช","ลำลอง"]
+];
+let currentTone="ป้ายยาตื่นเต้น";
+const STYLES = [
+  ["ป้ายยาตื่นเต้น","พูดภาษาไทยด้วยน้ำเสียงตื่นเต้น สดใส เหมือนเพื่อนป้ายยาของดีให้เพื่อนฟัง เน้นคำสำคัญ มีพลังตลอดคลิป"],
+  ["เป็นกันเอง","พูดภาษาไทยแบบเป็นกันเอง สบาย ๆ เหมือนเล่าให้เพื่อนฟัง จริงใจ ไม่ขายของเกินไป"],
+  ["ฮาร์ดเซล","พูดภาษาไทยแบบแม่ค้าไลฟ์สด พลังสูง เร่งเร้า เน้นโปรโมชันและความคุ้ม ปิดท้ายด้วยการเชิญชวนให้กดสั่งซื้อทันที"],
+  ["นุ่มนวลพรีเมียม","พูดภาษาไทยด้วยน้ำเสียงนุ่มนวล สุภาพ ดูหรูหรา จังหวะช้าลงเล็กน้อย เหมาะกับสินค้าความงามระดับพรีเมียม"],
+  ["ตลกกวน ๆ","พูดภาษาไทยแบบกวน ๆ ขำ ๆ มีจังหวะหยอกล้อ แต่ยังฟังรู้เรื่องและน่าเชื่อถือ"]
+];
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+
+// voices
+VOICES.forEach(([n,g,d])=>{const o=document.createElement("option");o.value=n;o.textContent=`${n} (${g}) · ${d}`;$("voice").appendChild(o)});
+$("voice").value = store.get("vs_voice") || "Kore";
+$("voice").onchange = ()=>store.set("vs_voice",$("voice").value);
+
+// style chips
+STYLES.forEach(([name,text],i)=>{
+  const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=name;b.setAttribute("aria-pressed","false");
+  b.onclick=()=>{document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");$("style").value=text;currentTone=name;};
+  $("chips").appendChild(b);
+  if(i===0){b.setAttribute("aria-pressed","true");$("style").value=text;}
+});
+
+// key
+const saved = store.get("vs_key");
+if(saved){$("key").value=saved;$("remember").checked=true;}
+$("showKey").onclick=()=>{const k=$("key");const s=k.type==="password";k.type=s?"text":"password";$("showKey").textContent=s?"ซ่อน":"ดู";};
+function syncKey(){ if($("remember").checked) store.set("vs_key",$("key").value.trim()); else store.del("vs_key"); }
+$("remember").onchange=syncKey; $("key").oninput=syncKey;
+
+// script cleaning
+function cleanScript(t){
+  if(!$("clean").checked) return t.trim();
+  return t
+    .replace(/\*\*/g,"")
+    .replace(/\[[^\]]*\]/g,"")
+    .replace(/\([^)]*\)/g,"").replace(/（[^）]*）/g,"")
+    .replace(/[“”"]/g,"")
+    .split("\n").map(l=>l.replace(/^[\s\-–•:]+/,"").trim()).filter(Boolean).join("\n");
+}
+function refresh(){
+  const c=cleanScript($("script").value);
+  const p=$("preview-box");
+  p.textContent=c||"ยังไม่มีสคริปต์"; p.classList.toggle("empty",!c);
+  $("count").textContent=c?`${c.length} ตัวอักษร · ประมาณ ${Math.max(1,Math.round(c.length/12))} วินาที`:"";
+}
+$("script").oninput=refresh; $("clean").onchange=refresh; refresh();
+
+
+// ---------- images ----------
+let images=[]; // {mime,data,url}
+function shrink(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onerror=()=>reject(new Error("อ่านรูปไม่ได้"));
+    r.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("ไฟล์นี้ไม่ใช่รูปที่รองรับ"));
+      img.onload=()=>{
+        const max=1280; let {width:w,height:h}=img;
+        if(Math.max(w,h)>max){const k=max/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k);}
+        const c=document.createElement("canvas");c.width=w;c.height=h;
+        c.getContext("2d").drawImage(img,0,0,w,h);
+        const url=c.toDataURL("image/jpeg",0.85);
+        resolve({mime:"image/jpeg",data:url.split(",")[1],url});
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+function drawThumbs(){
+  const t=$("thumbs");t.innerHTML="";
+  images.forEach((im,i)=>{
+    const d=document.createElement("div");d.className="thumb";
+    d.innerHTML=`<img src="${im.url}" alt="รูปที่ ${i+1}"><button type="button" aria-label="ลบรูปที่ ${i+1}">✕</button>`;
+    d.querySelector("button").onclick=()=>{images.splice(i,1);drawThumbs();};
+    t.appendChild(d);
+  });
+}
+$("imgs").onchange=async e=>{
+  const files=[...e.target.files].slice(0,4-images.length);
+  for(const f of files){try{images.push(await shrink(f));}catch(err){setStatus2(err.message,"err");}}
+  e.target.value="";drawThumbs();
+};
+function netMsg(e){
+  const m=String(e&&e.message||"");
+  if(/load failed|failed to fetch|networkerror|network connection/i.test(m))
+    return "เชื่อมต่อ Google ไม่ได้ เช็กอินเทอร์เน็ต และเปิดหน้านี้ผ่าน Safari จากลิงก์เว็บ (ถ้าเปิดในแอป Claude จะถูกบล็อก)";
+  return m;
+}
+function setStatus2(msg,cls){const s=$("status2");s.textContent=msg;s.className=cls||"";}
+
+function apiError(status,m){
+  if(status===400&&/key/i.test(m)) return "API Key ไม่ถูกต้อง ตรวจว่าก๊อปมาครบ";
+  if(status===401||status===403) return "คีย์นี้ไม่มีสิทธิ์ใช้งาน ลองสร้างคีย์ใหม่ใน AI Studio";
+  if(status===404) return "ไม่พบโมเดลนี้ ลองเปลี่ยนชื่อโมเดลในตั้งค่าขั้นสูง";
+  if(status===429) return "ใช้เกินโควตาแล้ว รอสักพักหรือเช็กโควตาใน AI Studio";
+  if(status===503||status===500) return "เซิร์ฟเวอร์ Google มีคนใช้เยอะมากตอนนี้ (ลองโมเดลสำรองแล้วก็ยังเต็ม) รอ 1–2 นาทีแล้วกดใหม่";
+  return m||"ลองใหม่อีกครั้ง";
+}
+
+// call Gemini, falling back to backup models when one is overloaded or missing
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function callGemini(models,key,body,onTry){
+  const list=[...new Set(models.filter(Boolean))];
+  let last={status:0,msg:""};
+  for(let i=0;i<list.length;i++){
+    const model=list[i];
+    if(onTry) onTry(model,i);
+    if(i>0) await sleep(800);
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{
+      method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)});
+    const data=await res.json().catch(()=>({}));
+    if(res.ok) return data;
+    last={status:res.status,msg:(data.error&&data.error.message)||""};
+    if(![500,503,404,429].includes(res.status)) break;
+  }
+  const e=new Error(`(${last.status}) `+apiError(last.status,last.msg)); e.status=last.status; throw e;
+}
+
+// ---------- script generation ----------
+$("think").onclick=async ()=>{
+  const key=$("key").value.trim();
+  if(!key){setStatus2("ใส่ API Key ในขั้นที่ 1 ก่อน","err");$("key").focus();return;}
+  const info=$("info").value.trim();
+  if(!images.length&&!info){setStatus2("เลือกรูปสินค้าหรือพิมพ์ข้อมูลสินค้าอย่างน้อยหนึ่งอย่าง","err");return;}
+  const sec=+$("len").value, platform=$("platform").value;
+  const syll=Math.round(sec*2.8);
+  const instructions=`คุณคือครีเอเตอร์สายรีวิวสินค้าและ Affiliate ชาวไทยมืออาชีพ
+ดูรูปสินค้า/หน้าปกวิดีโอที่แนบมา (ถ้ามี) และข้อมูลเพิ่มเติม แล้วเขียนงานสำหรับคลิป ${platform} ความยาว ${sec} วินาที โทน "${currentTone}"
+
+ข้อมูลเพิ่มเติมจากผู้ขาย: ${info||"(ไม่มี ให้อ่านจากรูป)"}
+
+กติกา:
+- script: บทพูดภาษาไทยล้วนสำหรับพากย์เสียง ยาวประมาณ ${syll} พยางค์ (พูดจบใน ${sec} วินาที) เปิดด้วยฮุก 3 วินาทีแรกที่หยุดนิ้วคนดู เล่าจุดเด่นที่เห็นจากรูปจริง ปิดด้วยคำเชิญชวนให้กดตะกร้าหรือกดลิงก์ ใช้ ... แทนจุดเว้นหายใจ ห้ามใส่เวลา หัวข้อ วงเล็บ อีโมจิ หรือคำกำกับเสียง
+- ห้ามแต่งข้อมูลที่ไม่เห็นในรูปหรือไม่ได้รับมา เช่น ราคา ส่วนลด สเปก ถ้าไม่รู้ให้เลี่ยงไปพูดกว้าง ๆ
+- ห้ามใช้คำโฆษณาเกินจริง เช่น หายขาด 100% ขาวใน 3 วัน รักษาโรค โดยเฉพาะสินค้าความงาม อาหารเสริม และสุขภาพ
+- caption: แคปชันโพสต์ภาษาไทย 1–3 บรรทัด สั้น ชวนกด มีอีโมจิได้เล็กน้อย ไม่ต้องใส่แฮชแท็ก
+- hashtags: แฮชแท็ก 5 อัน ที่เกี่ยวกับสินค้าและเหมาะกับ ${platform} ขึ้นต้นด้วย #`;
+  const parts=[{text:instructions},...images.map(im=>({inlineData:{mimeType:im.mime,data:im.data}}))];
+  const model=$("textModel").value.trim()||"gemini-flash-latest";
+  $("think").disabled=true;$("think").textContent="กำลังคิดสคริปต์...";
+  setStatus2("AI กำลังดูรูปและเขียนสคริปต์");
+  try{
+    let data;
+    try{
+      data=await callGemini([model,"gemini-flash-lite-latest","gemini-2.5-flash"],key,{contents:[{parts}],generationConfig:{
+        responseMimeType:"application/json",
+        responseSchema:{type:"OBJECT",properties:{
+          script:{type:"STRING"},caption:{type:"STRING"},
+          hashtags:{type:"ARRAY",items:{type:"STRING"}}
+        },required:["script","caption","hashtags"]}
+      }},(m,i)=>{if(i>0)setStatus2("โมเดลหลักคนใช้เยอะ กำลังลองโมเดลสำรอง ("+m+")");});
+    }catch(err){ if(err.status) err.message="คิดสคริปต์ไม่สำเร็จ "+err.message; throw err; }
+    const raw=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("").replace(/```json|```/g,"").trim();
+    let out; try{out=JSON.parse(raw);}catch(e){throw new Error("AI ตอบกลับมาในรูปแบบที่อ่านไม่ได้ ลองกดอีกครั้ง");}
+    const tags=(out.hashtags||[]).slice(0,5).map(t=>t.trim().startsWith("#")?t.trim():"#"+t.trim().replace(/\s+/g,""));
+    $("script").value=(out.script||"").trim(); refresh();
+    $("capOut").textContent=(out.caption||"").trim();
+    $("tagOut").textContent=tags.join(" ");
+    $("out").classList.add("show");
+    setStatus2("");
+    $("script").scrollIntoView({behavior:"smooth",block:"center"});
+  }catch(e){
+    setStatus2(netMsg(e),"err");
+  }finally{
+    $("think").disabled=false;$("think").textContent="คิดสคริปต์ + แคปชัน";
+  }
+};
+$("copyCap").onclick=async ()=>{
+  const txt=$("capOut").textContent+"\n\n"+$("tagOut").textContent;
+  try{await navigator.clipboard.writeText(txt);$("copyCap").textContent="ก๊อปแล้ว";}
+  catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();$("copyCap").textContent="ก๊อปแล้ว";}
+  setTimeout(()=>$("copyCap").textContent="ก๊อปแคปชัน + แฮชแท็ก",1800);
+};
+
+// PCM -> WAV
+function pcmToWav(b64, rate){
+  const bin=atob(b64); const len=bin.length;
+  const buf=new ArrayBuffer(44+len); const v=new DataView(buf);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,"RIFF");v.setUint32(4,36+len,true);w(8,"WAVE");w(12,"fmt ");
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  w(36,"data");v.setUint32(40,len,true);
+  const bytes=new Uint8Array(buf,44); for(let i=0;i<len;i++)bytes[i]=bin.charCodeAt(i);
+  return new Blob([buf],{type:"audio/wav"});
+}
+
+function setStatus(msg,cls){const s=$("status");s.textContent=msg;s.className=cls||"";}
+let clipNo=0;
+
+$("go").onclick = async ()=>{
+  const key=$("key").value.trim(); const text=cleanScript($("script").value);
+  const model=$("model").value.trim()||"gemini-3.1-flash-tts-preview"; const voice=$("voice").value;
+  if(!key){setStatus("ใส่ API Key ในขั้นที่ 1 ก่อน","err");$("key").focus();return;}
+  if(!text){setStatus("ใส่สคริปต์ในขั้นที่ 3 ก่อน","err");$("script").focus();return;}
+  const direction=[$("style").value.trim(),$("speed").value].filter(Boolean).join(" ");
+  const prompt = direction ? `${direction}:\n${text}` : text;
+
+  $("go").disabled=true;$("go").classList.add("busy");$("goText").textContent="กำลังพากย์...";
+  setStatus("กำลังส่งสคริปต์ไปที่ Gemini อาจใช้เวลา 10–40 วินาที");
+  try{
+    let data;
+    try{
+      data=await callGemini([model,"gemini-2.5-flash-preview-tts"],key,{
+        contents:[{parts:[{text:prompt}]}],
+        generationConfig:{responseModalities:["AUDIO"],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}
+      },(m,i)=>{if(i>0)setStatus("โมเดลหลักคนใช้เยอะ กำลังลองโมเดลสำรอง ("+m+")");});
+    }catch(err){ if(err.status) err.message="พากย์ไม่สำเร็จ "+err.message; throw err; }
+    const part=data?.candidates?.[0]?.content?.parts?.find(p=>p.inlineData);
+    if(!part) throw new Error("Gemini ไม่ได้ส่งเสียงกลับมา ลองย่อสคริปต์ให้สั้นลงหรือลองใหม่");
+    const mime=part.inlineData.mimeType||"";
+    const rate=parseInt((mime.match(/rate=(\d+)/)||[])[1]||"24000",10);
+    const blob=pcmToWav(part.inlineData.data,rate);
+    const url=URL.createObjectURL(blob);
+    clipNo++;
+    const box=$("clips"); const empty=box.querySelector(".empty-list"); if(empty) empty.remove();
+    const el=document.createElement("div"); el.className="clip";
+    const time=new Date().toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"});
+    el.innerHTML=`<div class="top"><b>เสียงที่ ${clipNo}</b><small>${voice} · ${time}</small></div>
+      <audio controls src="${url}"></audio>
+      <a href="${url}" download="voiceover-${clipNo}-${voice}.wav">ดาวน์โหลด WAV</a>`;
+    box.prepend(el);
+    el.querySelector("audio").play().catch(()=>{});
+    setStatus("พากย์เสร็จแล้ว ฟังหรือดาวน์โหลดได้ด้านล่าง","ok");
+  }catch(e){
+    setStatus(netMsg(e),"err");
+  }finally{
+    $("go").disabled=false;$("go").classList.remove("busy");$("goText").textContent="พากย์เสียง";
+  }
+};
+</script>
+</body>
+</html>
