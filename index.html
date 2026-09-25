@@ -100,6 +100,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:.92rem;margin-top:12
 .copyrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 #status2{margin-top:10px;min-height:1.2em;font-size:.95rem}
 #status2.err{color:var(--err);font-weight:600}
+.alt{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--field);border:2px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:8px}
+.alt span{flex:1}
+.alt button{flex:none;padding:6px 12px;font-size:.88rem}
 .empty-list{color:var(--muted);font-size:.93rem;margin:0}
 footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
 </style>
@@ -157,10 +160,17 @@ footer{color:var(--muted);font-size:.85rem;text-align:center;margin-top:24px}
     </div>
     <label>โทนคลิป</label>
     <div class="chips" id="chips"></div>
+    <label for="hook">สไตล์ฮุกเปิดคลิป (3 วินาทีแรก)</label>
+    <select id="hook"></select>
+    <p class="hint" id="hookEx"></p>
     <p class="hint">โทนที่เลือกจะใช้ทั้งตอนคิดสคริปต์และตอนพากย์เสียง</p>
     <button type="button" id="think">คิดสคริปต์ + แคปชัน</button>
     <div id="status2" role="status" aria-live="polite"></div>
     <div class="out" id="out">
+      <div id="altWrap" hidden>
+        <label>ฮุกสำรอง แตะเพื่อสลับ</label>
+        <div id="altHooks"></div>
+      </div>
       <label>แคปชันสำหรับโพสต์</label>
       <div class="outbox" id="capOut"></div>
       <div class="tags" id="tagOut"></div>
@@ -237,7 +247,12 @@ const STYLES = [
   ["เป็นกันเอง","พูดภาษาไทยแบบเป็นกันเอง สบาย ๆ เหมือนเล่าให้เพื่อนฟัง จริงใจ ไม่ขายของเกินไป"],
   ["ฮาร์ดเซล","พูดภาษาไทยแบบแม่ค้าไลฟ์สด พลังสูง เร่งเร้า เน้นโปรโมชันและความคุ้ม ปิดท้ายด้วยการเชิญชวนให้กดสั่งซื้อทันที"],
   ["นุ่มนวลพรีเมียม","พูดภาษาไทยด้วยน้ำเสียงนุ่มนวล สุภาพ ดูหรูหรา จังหวะช้าลงเล็กน้อย เหมาะกับสินค้าความงามระดับพรีเมียม"],
-  ["ตลกกวน ๆ","พูดภาษาไทยแบบกวน ๆ ขำ ๆ มีจังหวะหยอกล้อ แต่ยังฟังรู้เรื่องและน่าเชื่อถือ"]
+  ["ตลกกวน ๆ","พูดภาษาไทยแบบกวน ๆ ขำ ๆ มีจังหวะหยอกล้อ แต่ยังฟังรู้เรื่องและน่าเชื่อถือ"],
+  ["รีวิวจริงใจไม่อวย","พูดภาษาไทยแบบรีวิวตรงไปตรงมา น้ำเสียงนิ่ง มั่นใจ น่าเชื่อถือ บอกทั้งจุดเด่นและข้อสังเกต ไม่เว่อร์"],
+  ["Storytime เล่าเรื่อง","พูดภาษาไทยแบบเล่าเรื่องให้เพื่อนสนิทฟัง มีจังหวะขึ้นลง ชวนติดตามจนจบ เป็นธรรมชาติ"],
+  ["ASMR เสียงเบา","พูดภาษาไทยเสียงเบา นุ่ม ใกล้ไมค์ จังหวะช้า ผ่อนคลาย เหมือนคลิปแกะกล่อง ASMR"],
+  ["ภาษาวัยรุ่น Gen Z","พูดภาษาไทยแบบวัยรุ่น สนุก จังหวะเร็ว ใช้คำฮิตที่เข้าใจง่าย ไม่หยาบคาย"],
+  ["สรุปไว สายข้อมูล","พูดภาษาไทยกระชับ ชัดเจน มั่นใจ เหมือนสรุปข้อมูลสำคัญให้ฟังเร็ว ๆ ทีละข้อ"]
 ];
 const $ = id => document.getElementById(id);
 const store = {
@@ -258,6 +273,46 @@ STYLES.forEach(([name,text],i)=>{
   $("chips").appendChild(b);
   if(i===0){b.setAttribute("aria-pressed","true");$("style").value=text;}
 });
+
+
+// ---------- hook styles ----------
+const HOOKS=[
+  ["auto","ให้ AI เลือกให้เหมาะกับสินค้า","เลือกสไตล์ฮุกที่เหมาะกับสินค้านี้ที่สุด",""],
+  ["pain","ถามตรงจุดปัญหา","เปิดด้วยคำถามที่แทงใจปัญหาที่คนดูเจออยู่ทุกวัน","โต๊ะรกแบบนี้อยู่หรือเปล่า..."],
+  ["result","โชว์ผลลัพธ์ก่อน","เปิดด้วยผลลัพธ์หรือภาพหลังใช้ทันที แล้วค่อยเฉลยว่าใช้อะไร","ดูผลลัพธ์นี่ก่อน... แล้วจะบอกว่าใช้อะไร"],
+  ["pov","POV เล่าเรื่อง","เปิดด้วย POV: ให้คนดูเป็นตัวเอกในสถานการณ์ที่เจอบ่อย","POV: คุณเพิ่งเจอตัวช่วยตอนเช้าที่ใช้ได้จริง"],
+  ["curiosity","ความลับที่คนไม่รู้","เปิดด้วยการบอกว่ามีจุดเด่นหรือวิธีใช้ที่คนส่วนใหญ่ไม่รู้ ชวนให้อยากดูต่อ","ของชิ้นนี้มีอยู่ฟังก์ชันนึง ที่คนส่วนใหญ่ไม่รู้..."],
+  ["interrupt","หยุดนิ้ว ขัดความคาดหมาย","เปิดด้วยประโยคสั้น แรง ไม่คาดคิด ที่ทำให้คนหยุดเลื่อน","หยุดเลื่อนก่อน! ถ้ายังใช้แบบเดิมอยู่ต้องดู"],
+  ["compare","เทียบถูก vs แพง","เปิดด้วยการเปรียบเทียบกับของอีกระดับ ใช้ตัวเลขราคาเฉพาะที่ผู้ขายให้มา ถ้าไม่มีราคาให้เทียบแบบไม่ระบุตัวเลข","ของหลักร้อย กับของหลักพัน... ต่างกันจริงไหม"],
+  ["honest","บอกข้อเสียก่อน","เปิดด้วยข้อสังเกตหรือข้อจำกัดเล็ก ๆ ที่สมเหตุสมผล (เช่น ไม่เหมาะกับใคร) เพื่อสร้างความน่าเชื่อถือ แล้วตามด้วยจุดเด่น","ตัวนี้มีข้อเสียอยู่ข้อเดียวนะ..."],
+  ["demo","ทดลองให้ดูตรงนี้","เปิดด้วยการชวนดูการทดลองใช้งานจริงตรงหน้า","ไม่ต้องเชื่อ ลองให้ดูกันตรงนี้เลย"],
+  ["number","ตัวเลขเจาะจง","เปิดด้วยตัวเลขเชิงโครงสร้าง เช่น 3 เหตุผล 2 จุดเด่น ห้ามใช้ตัวเลขยอดขายหรือรีวิวที่แต่งขึ้น","3 เหตุผลที่ตัวนี้อยู่ในตะกร้าฉันตลอด"],
+  ["urgency","ด่วน ก่อนหมดโปร","เปิดด้วยความเร่งด่วนเรื่องโปรโมชัน ใช้ได้เฉพาะเมื่อผู้ขายให้ข้อมูลโปร ส่วนลด หรือวันหมดเขตมา ถ้าไม่มีให้เปลี่ยนไปใช้ฮุกแบบถามตรงจุดปัญหาแทน","โปรนี้ถึงแค่สิ้นเดือนนะ..."]
+];
+HOOKS.forEach(([id,label])=>{const o=document.createElement("option");o.value=id;o.textContent=label;$("hook").appendChild(o);});
+function showHookEx(){const h=HOOKS.find(x=>x[0]===$("hook").value);$("hookEx").textContent=h&&h[3]?`ตัวอย่าง: “${h[3]}”`:"AI จะเลือกฮุกที่เข้ากับสินค้าและโทนให้เอง";}
+$("hook").onchange=showHookEx; showHookEx();
+function toneDesc(){const t=STYLES.find(s=>s[0]===currentTone);return t?t[1]:"";}
+function hookRule(){
+  const h=HOOKS.find(x=>x[0]===$("hook").value)||HOOKS[0];
+  return h[0]==="auto"?"เลือกสไตล์ฮุกที่เหมาะกับสินค้าและโทนนี้ที่สุด":`สไตล์ "${h[1]}": ${h[2]}${h[3]?` (ตัวอย่างแนวทาง: "${h[3]}" ห้ามลอกตรง ๆ ให้เขียนใหม่ให้เข้ากับสินค้า)`:""}`;
+}
+let currentHook="";
+function renderAltHooks(list){
+  const box=$("altHooks"); box.innerHTML="";
+  (list||[]).filter(Boolean).slice(0,3).forEach(h=>{
+    const row=document.createElement("div");row.className="alt";
+    const t=document.createElement("span");t.textContent=h;
+    const b=document.createElement("button");b.type="button";b.textContent="ใช้ฮุกนี้";
+    b.onclick=()=>{
+      const s=$("script").value;
+      $("script").value = currentHook&&s.startsWith(currentHook) ? h+s.slice(currentHook.length) : h+" "+s;
+      currentHook=h; refresh(); b.textContent="ใช้แล้ว"; setTimeout(()=>b.textContent="ใช้ฮุกนี้",1500);
+    };
+    row.append(t,b);box.appendChild(row);
+  });
+  $("altWrap").hidden=!box.children.length;
+}
 
 // key
 const saved = store.get("vs_key");
@@ -366,14 +421,17 @@ $("think").onclick=async ()=>{
   const sec=+$("len").value, platform=$("platform").value;
   const syll=Math.round(sec*2.8);
   const instructions=`คุณคือครีเอเตอร์สายรีวิวสินค้าและ Affiliate ชาวไทยมืออาชีพ
-ดูรูปสินค้า/หน้าปกวิดีโอที่แนบมา (ถ้ามี) และข้อมูลเพิ่มเติม แล้วเขียนงานสำหรับคลิป ${platform} ความยาว ${sec} วินาที โทน "${currentTone}"
+ดูรูปสินค้า/หน้าปกวิดีโอที่แนบมา (ถ้ามี) และข้อมูลเพิ่มเติม แล้วเขียนงานสำหรับคลิป ${platform} ความยาว ${sec} วินาที โทน "${currentTone}" (${toneDesc()})
 
 ข้อมูลเพิ่มเติมจากผู้ขาย: ${info||"(ไม่มี ให้อ่านจากรูป)"}
 
 กติกา:
-- script: บทพูดภาษาไทยล้วนสำหรับพากย์เสียง ยาวประมาณ ${syll} พยางค์ (พูดจบใน ${sec} วินาที) เปิดด้วยฮุก 3 วินาทีแรกที่หยุดนิ้วคนดู เล่าจุดเด่นที่เห็นจากรูปจริง ปิดด้วยคำเชิญชวนให้กดตะกร้าหรือกดลิงก์ ใช้ ... แทนจุดเว้นหายใจ ห้ามใส่เวลา หัวข้อ วงเล็บ อีโมจิ หรือคำกำกับเสียง
+- hook: ประโยคฮุกเปิดคลิป 1 ประโยค พูดจบในไม่เกิน 3 วินาที โดย${hookRule()}
+- body: บทพูดต่อจากฮุก เล่าจุดเด่นที่เห็นจากรูปจริง ปิดด้วยคำเชิญชวนให้กดตะกร้าหรือกดลิงก์ hook+body รวมกันยาวประมาณ ${syll} พยางค์ (พูดจบใน ${sec} วินาที) ภาษาไทยล้วนสำหรับพากย์เสียง ใช้ ... แทนจุดเว้นหายใจ ห้ามใส่เวลา หัวข้อ วงเล็บ อีโมจิ หรือคำกำกับเสียง
+- alt_hooks: ฮุกสำรอง 3 ประโยค คนละสไตล์กับฮุกหลักและคนละสไตล์กัน แต่ละประโยคพูดจบในไม่เกิน 3 วินาที และต่อกับ body ได้ลื่น
 - ห้ามแต่งข้อมูลที่ไม่เห็นในรูปหรือไม่ได้รับมา เช่น ราคา ส่วนลด สเปก ถ้าไม่รู้ให้เลี่ยงไปพูดกว้าง ๆ
 - ห้ามใช้คำโฆษณาเกินจริง เช่น หายขาด 100% ขาวใน 3 วัน รักษาโรค โดยเฉพาะสินค้าความงาม อาหารเสริม และสุขภาพ
+- ห้ามแต่งยอดขาย จำนวนคนซื้อ จำนวนรีวิว หรือระยะเวลาที่ใช้เอง ถ้าไม่ได้รับข้อมูลมา
 - caption: แคปชันโพสต์ภาษาไทย 1–3 บรรทัด สั้น ชวนกด มีอีโมจิได้เล็กน้อย ไม่ต้องใส่แฮชแท็ก
 - hashtags: แฮชแท็ก 5 อัน ที่เกี่ยวกับสินค้าและเหมาะกับ ${platform} ขึ้นต้นด้วย #`;
   const parts=[{text:instructions},...images.map(im=>({inlineData:{mimeType:im.mime,data:im.data}}))];
@@ -386,15 +444,19 @@ $("think").onclick=async ()=>{
       data=await callGemini([model,"gemini-flash-lite-latest","gemini-2.5-flash"],key,{contents:[{parts}],generationConfig:{
         responseMimeType:"application/json",
         responseSchema:{type:"OBJECT",properties:{
-          script:{type:"STRING"},caption:{type:"STRING"},
+          hook:{type:"STRING"},body:{type:"STRING"},
+          alt_hooks:{type:"ARRAY",items:{type:"STRING"}},
+          caption:{type:"STRING"},
           hashtags:{type:"ARRAY",items:{type:"STRING"}}
-        },required:["script","caption","hashtags"]}
+        },required:["hook","body","alt_hooks","caption","hashtags"]}
       }},(m,i)=>{if(i>0)setStatus2("โมเดลหลักคนใช้เยอะ กำลังลองโมเดลสำรอง ("+m+")");});
     }catch(err){ if(err.status) err.message="คิดสคริปต์ไม่สำเร็จ "+err.message; throw err; }
     const raw=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("").replace(/```json|```/g,"").trim();
     let out; try{out=JSON.parse(raw);}catch(e){throw new Error("AI ตอบกลับมาในรูปแบบที่อ่านไม่ได้ ลองกดอีกครั้ง");}
     const tags=(out.hashtags||[]).slice(0,5).map(t=>t.trim().startsWith("#")?t.trim():"#"+t.trim().replace(/\s+/g,""));
-    $("script").value=(out.script||"").trim(); refresh();
+    currentHook=String(out.hook||"").trim();
+    $("script").value=[currentHook,String(out.body||out.script||"").trim()].filter(Boolean).join(" "); refresh();
+    renderAltHooks(out.alt_hooks);
     $("capOut").textContent=(out.caption||"").trim();
     $("tagOut").textContent=tags.join(" ");
     $("out").classList.add("show");
